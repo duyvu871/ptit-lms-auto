@@ -30,6 +30,5 @@
 
 -  Hãy chắc chắn bạn đã cài đặt Chrome trên máy tính, vì tool cần Chrome để hoạt động.
 -  Nhập đúng thông tin vào file `.env`.
--  Hãy nhớ rằng việc sử dụng tool có thể vi phạm quy định của LMS PTIT.
 
 Chúc bạn sử dụng tool thành công và học tập hiệu quả!
