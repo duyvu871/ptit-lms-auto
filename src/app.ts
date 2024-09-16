@@ -175,8 +175,13 @@ async function gotoSlidePage() {
         logger(errorColor('Slide not found'));
         throw new Error('Slide not found');
     }
+    const firstSlide = path.join(LMS_DOMAIN, targetSlideHref);
+    const url = new URL(firstSlide);
+    if (!url.searchParams.has('fullscreen')) {
+        url.searchParams.append('fullscreen', "1");
+    }
     await browser.page.setBypassCSP(true);
-    await browser.goto(path.join(LMS_DOMAIN, targetSlideHref));
+    await browser.goto(url.toString());
     await browser.page.setCookie(...cookies as Cookie[]);
     await browser.page.waitForNavigation({waitUntil: 'networkidle2'});
 
@@ -224,7 +229,7 @@ async function loginAction() {
 }
 
 async function bootstrap() {
-
+    logger(`Target course: ${process.env.COURSE_URL}`);
     const initialized = await browser.initialize();
     if (!initialized) {
         logger('Failed to initialize browser');
@@ -248,15 +253,15 @@ async function bootstrap() {
     //     throw new Error('Session id not found');
     // }
     logger(successColor('Login success'));
-    await browser.goto(path.join(LMS_DOMAIN, '/slides'));
-    await browser.page.setCookie(...cookies);
-    await Promise.all([
-        browser.page.waitForNavigation({waitUntil: 'networkidle2'}),
-        async () => { logger(successColor('Direct to course page')); },
-        browser.goto(process.env.COURSE_URL),
-        browser.page.setCookie(...cookies),
-        browser.page.waitForNavigation({waitUntil: 'networkidle2'}),
-    ]);
+    // await browser.goto(path.join(LMS_DOMAIN, '/slides'));
+    // await browser.page.setCookie(...cookies);
+    // await Promise.all([
+    //     await browser.page.waitForNavigation({waitUntil: 'networkidle2'})
+        await (async () => { logger(successColor('Direct to course page')); })
+        await browser.goto(process.env.COURSE_URL)
+        await browser.page.setCookie(...cookies)
+        // await browser.page.waitForNavigation({waitUntil: 'networkidle2'})
+    // ]);
     await gotoSlidePage();
     logger(successColor.bold('All slides completed'));
 }
