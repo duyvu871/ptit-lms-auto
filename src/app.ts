@@ -217,8 +217,11 @@ async function loginAction() {
         }
     });
 
-    await fillLoginForm();
-    await handleLoginError();
+    await Promise.all([
+        fillLoginForm(),
+        handleLoginError(),
+    ]);
+
     return;
 }
 
@@ -234,26 +237,26 @@ async function bootstrap() {
         MAX_RETRY,
         RETRY_WAIT,
     });
+
+    // const cookies = await browser.page.cookies();
+    // fs.writeFile('./store/cookie/cookies.json', JSON.stringify(cookies), (error) => {
+    //     if (error) logger(errorColor('Failed to write cookies'));
+    //     else logger(successColor('Cookies saved'));
+    // });
+    // console.log(cookies);
+    // const session_id = cookies.find(c => c.name === 'session_id');
+    // if (!session_id) {
+    //     logger(errorColor('Session id not found'));
+    //     throw new Error('Session id not found');
+    // }
     logger(successColor('Login success'));
-
-    const cookies = await browser.page.cookies();
-    fs.writeFile('./store/cookie/cookies.json', JSON.stringify(cookies), (error) => {
-        if (error) logger(errorColor('Failed to write cookies'));
-        else logger(successColor('Cookies saved'));
-    });
-
-    const session_id = cookies.find(c => c.name === 'session_id');
-    if (!session_id) {
-        logger(errorColor('Session id not found'));
-        throw new Error('Session id not found');
-    }
     await browser.goto(path.join(LMS_DOMAIN, '/slides'));
-    await browser.page.setCookie(...cookies);
+    // await browser.page.setCookie(...cookies);
     await Promise.all([
         browser.page.waitForNavigation({waitUntil: 'networkidle2'}),
         async () => { logger(successColor('Direct to course page')); },
         browser.goto(process.env.COURSE_URL),
-        browser.page.setCookie(...cookies),
+        // browser.page.setCookie(...cookies),
         browser.page.waitForNavigation({waitUntil: 'networkidle2'}),
     ]);
     await gotoSlidePage();
