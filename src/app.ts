@@ -127,7 +127,7 @@ async function handleSlide(slide: Slide, courseService: CourseService) {
             return null;
         }
         const answerStore = await courseService._getSlideAnswersStore(slideAnswers.result.slide_questions.map(q => q.id));
-        // logger('questions:', slideAnswers.result.slide_questions.map(q => q.id));
+        process.env.NODE_ENV === 'development' && console.log('answer from store', answerStore);
         if (answerStore) {
             const submitQuiz = await retryWrapper(() => courseService._submitQuiz(slide, answerStore.map(a => a.id)), 'submitQuiz', retryOpt);
             if (submitQuiz?.result) {
@@ -156,13 +156,13 @@ async function handleSlide(slide: Slide, courseService: CourseService) {
         }
         if (submitQuiz.result.error === 'slide_quiz_incomplete') {
             logger(errorColor(`Quiz [${slide.title}] incomplete or not open to learn`));
-            return true;
+            return null;
         }
         if (submitQuiz.result.error === 'slide_quiz_done') {
             logger(successColor(`Quiz [${slide.title}] already completed`));
             return true;
         }
-        logger(successColor(`Quiz [${slide.title}] submitted`));
+        logger(successColor(`Quiz [${slide.title}] submitted ok with answers from ${process.env.GEMINI_API_MODEL}`));
         return true;
     }
 }
