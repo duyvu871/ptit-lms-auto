@@ -47,7 +47,7 @@ export class Browser {
         // Initialize puppeteer with stealth plugin to avoid bot detection
         puppeteer.use(StealthPlugin());
         const browser = await puppeteer.launch({
-            headless: false,//(this.headless),
+            headless: (this.headless),
             args: [
                 '--disable-web-security',
                 '--fast-start',
@@ -73,14 +73,16 @@ export class Browser {
         this.page = page;
 
         await page.setRequestInterception(false);
-        await page.setViewport({
-            width: 0,
-            height: 0,
-            deviceScaleFactor: 1,
-            hasTouch: true,
-            isLandscape: false,
-            isMobile: false,
-        });
+        if (process.env.NODE_ENV === 'development') {
+            await page.setViewport({
+                width: 0,
+                height: 0,
+                deviceScaleFactor: 1,
+                hasTouch: true,
+                isLandscape: false,
+                isMobile: false,
+            });
+        }
         await page.setJavaScriptEnabled(true);
         page.setDefaultNavigationTimeout(0);
 

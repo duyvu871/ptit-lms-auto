@@ -217,10 +217,8 @@ async function loginAction() {
         }
     });
 
-    await Promise.all([
-        fillLoginForm(),
-        handleLoginError(),
-    ]);
+    await fillLoginForm();
+    await handleLoginError();
 
     return;
 }
@@ -238,7 +236,7 @@ async function bootstrap() {
         RETRY_WAIT,
     });
 
-    // const cookies = await browser.page.cookies();
+    const cookies = await browser.page.cookies();
     // fs.writeFile('./store/cookie/cookies.json', JSON.stringify(cookies), (error) => {
     //     if (error) logger(errorColor('Failed to write cookies'));
     //     else logger(successColor('Cookies saved'));
@@ -251,12 +249,12 @@ async function bootstrap() {
     // }
     logger(successColor('Login success'));
     await browser.goto(path.join(LMS_DOMAIN, '/slides'));
-    // await browser.page.setCookie(...cookies);
+    await browser.page.setCookie(...cookies);
     await Promise.all([
         browser.page.waitForNavigation({waitUntil: 'networkidle2'}),
         async () => { logger(successColor('Direct to course page')); },
         browser.goto(process.env.COURSE_URL),
-        // browser.page.setCookie(...cookies),
+        browser.page.setCookie(...cookies),
         browser.page.waitForNavigation({waitUntil: 'networkidle2'}),
     ]);
     await gotoSlidePage();
