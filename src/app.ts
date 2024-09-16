@@ -114,11 +114,11 @@ async function handleSlide(slide: Slide, courseService: CourseService) {
                 return answer ? answer.id : q.answer_ids[getRandomIntCrypto(0, 3)].id;
             })
         }
-        // const isSubmitted =  await retryWrapper(() => courseService._checkSubmitQuiz(slide), 'isSubmitted', retryOpt)
-        // if (isSubmitted) {
-        //     logger(successColor(`Quiz [${slide.title}] already completed`));
-        //     return true;
-        // }
+        const isSubmitted =  await retryWrapper(() => courseService._checkSubmitQuiz(slide), 'isSubmitted', retryOpt)
+        if (isSubmitted) {
+            logger(successColor(`Quiz [${slide.title}] already completed`));
+            return true;
+        }
         const slideAnswers = await retryWrapper(() => courseService._fetchQuizContent(slide), 'slideAnswers', retryOpt);
         if (!slideAnswers?.result) {
             logger(errorColor('Failed to fetch quiz from LMS'));
