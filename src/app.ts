@@ -1,12 +1,12 @@
 import {Browser} from "./browser";
 import * as dotenv from "dotenv";
-import {error as errorColor, notice as noticeColor, success as successColor} from "./utils/cli-color.ts";
+import {error as errorColor, notice as noticeColor, success as successColor, warn} from "./utils/cli-color.ts";
 import {logger} from "./utils/logger.ts";
 import fs from "fs";
 import {LMS_DOMAIN, LMS_OAUTH, MAX_RETRY, RETRY_WAIT} from "./global/constant.ts";
 import {getQueryParams} from "./utils/url-parser.ts";
 import * as path from "node:path";
-import {CourseService, LMSGetQuiz, Slide} from "./services/course";
+import {CourseService, LMSGetQuiz, LMSSubmitQuiz, Slide} from "./services/course";
 import {GeminiChatService} from "./services/llm/gemini.ts";
 import {contextWrapped} from "./services/llm/context.ts";
 import {getRandomIntCrypto} from "./utils/random.ts";
@@ -112,6 +112,19 @@ async function handleSlide(slide: Slide, courseService: CourseService) {
                 return answer ? answer.id : q.answer_ids[getRandomIntCrypto(0, 3)].id;
             })
         }
+
+        const checkPassedAnswer = (quizs: LMSSubmitQuiz, from: string) => {
+            let correctAnswers = 0;
+            for (const answerId in quizs.answers) {
+                if (quizs.answers[answerId].is_correct) correctAnswers++;
+            }
+            if (correctAnswers < 6) {
+                logger(warn(`Quiz [${slide.title}] submitted not passed`));
+                return true;
+            }
+            logger(successColor(`Quiz [${slide.title}] submitted ok with answers from ${from}`));
+        }
+
         if (slide.completed === 1) {
             logger(successColor(`Quiz [${slide.title}] already completed`));
             return true;
@@ -127,11 +140,11 @@ async function handleSlide(slide: Slide, courseService: CourseService) {
             return null;
         }
         const answerStore = await courseService._getSlideAnswersStore(slideAnswers.result.slide_questions.map(q => q.id));
-        process.env.NODE_ENV === 'development' && console.log('answer from store', answerStore);
+        // process.env.NODE_ENV === 'development' && console.log('answer from store', slideAnswers.result.slide_questions.map(q => q.answer_ids));
         if (answerStore) {
-            const submitQuiz = await retryWrapper(() => courseService._submitQuiz(slide, answerStore.map(a => a.id)), 'submitQuiz', retryOpt);
+            const submitQuiz = await retryWrapper(() => courseService._submitQuiz(slide, answerStore.map(a => a.answer_id ?? 900)), 'submitQuiz', retryOpt);
             if (submitQuiz?.result) {
-                logger(successColor(`[store] Quiz [${slide.title}] submitted`));
+                checkPassedAnswer(submitQuiz.result, 'store');
                 return true;
             }
             logger(errorColor('Failed to submit quiz from store'));
@@ -162,7 +175,15 @@ async function handleSlide(slide: Slide, courseService: CourseService) {
             logger(successColor(`Quiz [${slide.title}] already completed`));
             return true;
         }
-        logger(successColor(`Quiz [${slide.title}] submitted ok with answers from ${process.env.GEMINI_API_MODEL}`));
+        let correctAnswers = 0;
+        for (const answerId in submitQuiz.result.answers) {
+            if (submitQuiz.result.answers[answerId].is_correct) correctAnswers++;
+        }
+        if (correctAnswers < 6) {
+            logger(warn(`Quiz [${slide.title}] submitted not passed`));
+            return true;
+        }
+        checkPassedAnswer(submitQuiz.result, process.env.GEMINI_API_MODEL);
         return true;
     }
 }
@@ -187,7 +208,7 @@ async function gotoSlidePage() {
     await browser.page.setCookie(...cookies as Cookie[]);
     await browser.page.waitForNavigation({waitUntil: 'networkidle2'});
 
-    const courseSlug = await browser.page.$eval('.o_wslides_fs_sidebar_header > a', el => el.getAttribute('href'));
+    const courseSlug = (await browser.page.$eval('.o_wslides_fs_sidebar_header > a', el => el.getAttribute('href')))?.replace('/slides/', '');
     const courseService = new CourseService(courseSlug, browser.page);
     let slidesData = await courseService._getSlides();
 

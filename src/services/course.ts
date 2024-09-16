@@ -71,6 +71,12 @@ export type LMSSearchRead = {
 }[]
 
 export interface LMSSubmitQuiz {
+    answers: {
+      [key: string]: {
+          is_correct: boolean;
+          comment: false;
+      };
+    };
     channel_completion: number;
     completed: boolean;
     quizAttemptsCount: number;
@@ -188,7 +194,6 @@ export class CourseService {
         const fileContent = await fs.promises.readFile(path, 'utf-8');
         const jsonParsed = JSON.parse(fileContent) as {id: number, question: string , answer_id: number}[][];
         const items = [];
-        console.log(jsonParsed.length);
         for (const i of jsonParsed) {
            for (const j of i) {
                if (quizIds.includes(j.id)) {
