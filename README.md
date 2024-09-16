@@ -23,7 +23,6 @@
 
 ### 4. Chạy ứng dụng
 
-- **Chế độ development:** Chạy lệnh `npm run dev` để build và chạy ứng dụng ở chế độ development. Chế độ này sẽ tự động rebuild ứng dụng khi bạn thay đổi code, giúp bạn dễ dàng phát triển và debug.
 - **Chạy start:** Sau khi build xong (hoặc khi đang chạy ở chế độ development), chạy lệnh `npm run start` để khởi động ứng dụng. Ứng dụng sẽ tự động đăng nhập vào LMS PTIT, truy cập khóa học và thực hiện các thao tác tự động theo cấu hình.
 
 ### 5. Lưu ý

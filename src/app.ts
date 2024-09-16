@@ -13,10 +13,8 @@ import {getRandomIntCrypto} from "./utils/random.ts";
 import {Cookie} from "puppeteer";
 import {delay} from "./utils/process.ts";
 
-const NODE_ENV = process.env.NODE_ENV || 'development';
-
 const ENV = dotenv.config({
-    path: NODE_ENV === 'development' ? '.env.local' : '.env'
+    path: process.env.NODE_ENV === 'development' ? '.env.local' : '.env'
 });
 
 const browser = new Browser();
@@ -113,6 +111,10 @@ async function handleSlide(slide: Slide, courseService: CourseService) {
                 const answer = q.answer_ids.find(id => id.is_correct);
                 return answer ? answer.id : q.answer_ids[getRandomIntCrypto(0, 3)].id;
             })
+        }
+        if (slide.completed === 1) {
+            logger(successColor(`Quiz [${slide.title}] already completed`));
+            return true;
         }
         const isSubmitted =  await retryWrapper(() => courseService._checkSubmitQuiz(slide), 'isSubmitted', retryOpt)
         if (isSubmitted) {
