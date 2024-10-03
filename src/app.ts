@@ -119,7 +119,7 @@ async function handleSlide(slide: Slide, courseService: CourseService) {
                 if (quizs.answers[answerId].is_correct) correctAnswers++;
             }
             if (correctAnswers < 6) {
-                logger(warn(`Quiz [${slide.title}] submitted not passed`));
+                logger(warn(`Quiz [${slide.title}] submitted not passed from ${from}`));
                 return true;
             }
             logger(successColor(`Quiz [${slide.title}] submitted ok with answers from ${from}`));
@@ -141,7 +141,7 @@ async function handleSlide(slide: Slide, courseService: CourseService) {
         }
         const answerStore = await courseService._getSlideAnswersStore(slideAnswers.result.slide_questions.map(q => q.id));
         // process.env.NODE_ENV === 'development' && console.log('answer from store', slideAnswers.result.slide_questions.map(q => q.answer_ids));
-        if (answerStore) {
+        if (answerStore && answerStore.find(a => a.answer_id !== null)) {
             const submitQuiz = await retryWrapper(() => courseService._submitQuiz(slide, answerStore.map(a => a.answer_id ?? 900)), 'submitQuiz', retryOpt);
             if (submitQuiz?.result) {
                 checkPassedAnswer(submitQuiz.result, 'store');
@@ -151,7 +151,7 @@ async function handleSlide(slide: Slide, courseService: CourseService) {
         }
         const answerRandom = getQuizAnswers(slideAnswers.result.slide_questions);
         const answerFromLLM = (await llmService.sendMessage(contextWrapped(
-            'answer all questions in json i just provided',
+            'Bạn là một nhà phân tích triết học, chính trị, xã hội học,bạn có đam mê mãnh liệt với chủ nghĩa xã hội và biết rõ về lịch sử phát triển của chủ nghĩa xã hội, ',
             JSON.stringify(slideAnswers.result.slide_questions),
             '{id: number, question: string, answer_id: number}[]'
         ))).replace(/(```json)|(```)/g, '');
@@ -213,10 +213,13 @@ async function gotoSlidePage() {
     let slidesData = await courseService._getSlides();
 
     for (let slide of slidesData) {
-        // const published = await courseService._publishSlide(slide);
+        const published = await courseService._publishSlide(slide);
         await retryWrapper(() => handleSlide(slide, courseService), 'handleSlide', {retryIndex: 0, MAX_RETRY, RETRY_WAIT,});
-        // const nextLearned = await courseService._checkAbleToAccessSlide(slide);
-        // const searchResult = await courseService._searchRead(slide);
+        const nextLearned = await courseService._checkAbleToAccessSlide(slide);
+        const searchResult = await courseService._searchRead(slide);
+        logger("Published", published.result);
+        logger("Next slides enabled to learn", nextLearned.result);
+        // console.log(searchResult);
         await delay(process.env.DELAY_BETWEEN_SLIDE || 5000);
     }
 }

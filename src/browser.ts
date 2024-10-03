@@ -47,7 +47,7 @@ export class Browser {
         // Initialize puppeteer with stealth plugin to avoid bot detection
         puppeteer.use(StealthPlugin());
         const browser = await puppeteer.launch({
-            headless: (this.headless),
+            headless: false,//(this.headless),
             args: [
                 '--disable-web-security',
                 '--fast-start',

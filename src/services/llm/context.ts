@@ -1,9 +1,9 @@
 export function contextWrapped(require: string, input: string, output: string) {
     return `
-    I have a piece of data to process: ${input} with a request of ${require}.
-    Here is the output format that I wrote to process it: ${output}.
-    Please process it and return the result in the ${output} format to me!
-    IMPORTANT: return the result in the correct ${output} format!, just that and no other information.
-    No comments, no markdown code just return the text of result in the ${output} format.
+    Tôi có một phần dữ liệu cần xử lý: ${input} với yêu cầu ${require}.
+    Đây là định dạng đầu ra mà tôi đã viết để xử lý: ${output}.
+    Vui lòng xử lý và trả về kết quả theo định dạng ${output} cho tôi!
+    QUAN TRỌNG: trả về kết quả theo đúng định dạng ${output}!, chỉ vậy thôi và không có thông tin nào khác.
+    Không có bình luận, không có mã đánh dấu, chỉ trả về văn bản kết quả theo định dạng ${output}.
     `;
 }
